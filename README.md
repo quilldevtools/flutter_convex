@@ -73,6 +73,112 @@ ConvexService.instance.initialize(authService);
 // Token updates automatically when authService.token changes
 ```
 
+#### Example AuthService Implementation
+
+```dart
+import 'package:flutter/foundation.dart';
+
+class AuthService extends ChangeNotifier {
+  String? _token;
+  Map<String, dynamic>? _user;
+  bool _isLoading = false;
+
+  // Required: ConvexService looks for this property
+  String? get token => _token;
+  
+  Map<String, dynamic>? get user => _user;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _token != null;
+
+  Future<void> signIn(String email, String password) async {
+    _isLoading = true;
+    notifyListeners(); // ConvexService will be notified
+    
+    try {
+      // Your auth logic here (Clerk, Auth0, Firebase, etc.)
+      final response = await yourAuthProvider.signIn(email, password);
+      
+      _token = response.token;  // ConvexService automatically picks this up
+      _user = response.user;
+      _isLoading = false;
+      
+      notifyListeners(); // ConvexService reconnects with new token
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> signOut() async {
+    _token = null;  // ConvexService automatically updates
+    _user = null;
+    notifyListeners(); // ConvexService removes auth and reconnects
+  }
+
+  Future<void> refreshToken() async {
+    if (_token != null) {
+      final newToken = await yourAuthProvider.refreshToken(_token!);
+      _token = newToken;
+      notifyListeners(); // ConvexService gets new token automatically
+    }
+  }
+}
+```
+
+#### Integration with ConvexService
+
+```dart
+void main() {
+  ConvexConfig.initialize('https://your-deployment.convex.cloud');
+  
+  final authService = AuthService();
+  ConvexService.instance.initialize(authService);
+  
+  runApp(MyApp(authService: authService));
+}
+
+class MyApp extends StatelessWidget {
+  final AuthService authService;
+  const MyApp({required this.authService});
+
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: ListenableBuilder(
+        listenable: authService,
+        builder: (context, _) {
+          if (authService.isAuthenticated) {
+            return HomePage(); // ConvexService automatically has auth
+          } else {
+            return LoginPage(authService: authService);
+          }
+        },
+      ),
+    );
+  }
+}
+```
+
+#### AuthService Requirements
+
+For AuthService integration to work, your AuthService must:
+
+1. **Extend ChangeNotifier** - So ConvexService can listen to changes
+2. **Have a `token` getter** - ConvexService looks for `authService.token`
+3. **Call `notifyListeners()`** - When token changes (login/logout/refresh)
+
+```dart
+// Minimum required interface:
+class YourAuthService extends ChangeNotifier {
+  String? get token => _yourToken;  // Required property
+  
+  void updateToken(String? newToken) {
+    _yourToken = newToken;
+    notifyListeners();  // Required - notifies ConvexService
+  }
+}
+```
+
 ### 4. Manual Token Management
 
 ```dart
