@@ -37,16 +37,16 @@ class ConvexSubscription<T> {
   }
 }
 
-/// 🚀 CORE SERVICE FOR ALL CONVEX OPERATIONS
+/// CORE SERVICE FOR ALL CONVEX OPERATIONS
 ///
 /// Provides both real-time subscriptions (WebSocket) and HTTP operations
 /// for optimal performance and user experience.
 ///
-/// ✅ Real-time subscriptions for live data updates
-/// ✅ HTTP requests for one-time operations (mutations, actions)
-/// ✅ Automatic connection management and reconnection
-/// ✅ Optimistic updates support
-/// ✅ Stream-based event system
+/// Real-time subscriptions for live data updates
+/// HTTP requests for one-time operations (mutations, actions)
+/// Automatic connection management and reconnection
+/// Optimistic updates support
+/// Stream-based event system
 ///
 /// Usage:
 /// ```dart
@@ -86,7 +86,7 @@ class ConvexService extends ChangeNotifier {
   // Subscription management
   final Map<String, ConvexSubscription> _subscriptions = {};
   int _subscriptionIdCounter = 0;
-  
+
   // Convex protocol state
   String? _sessionId;
   int _connectionCount = 0;
@@ -94,39 +94,43 @@ class ConvexService extends ChangeNotifier {
   int _identityVersion = 0;
   final Map<int, String> _queryIdToSubscriptionId = {};
   int _nextQueryId = 1;
-  
+
   // Stream controllers for different event types
-  final _mutationResponseController = StreamController<Map<String, dynamic>>.broadcast();
-  final _actionResponseController = StreamController<Map<String, dynamic>>.broadcast();
+  final _mutationResponseController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  final _actionResponseController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _authErrorController = StreamController<String>.broadcast();
   final _fatalErrorController = StreamController<String>.broadcast();
   final _pingController = StreamController<void>.broadcast();
 
   /// Current connection state
   ConvexConnectionState get connectionState => _connectionState;
-  
+
   /// Stream of mutation responses from the server
-  Stream<Map<String, dynamic>> get onMutationResponse => _mutationResponseController.stream;
-  
-  /// Stream of action responses from the server  
-  Stream<Map<String, dynamic>> get onActionResponse => _actionResponseController.stream;
-  
+  Stream<Map<String, dynamic>> get onMutationResponse =>
+      _mutationResponseController.stream;
+
+  /// Stream of action responses from the server
+  Stream<Map<String, dynamic>> get onActionResponse =>
+      _actionResponseController.stream;
+
   /// Stream of authentication errors
   Stream<String> get onAuthError => _authErrorController.stream;
-  
+
   /// Stream of fatal errors that require reconnection
   Stream<String> get onFatalError => _fatalErrorController.stream;
-  
+
   /// Stream of ping events from the server
   Stream<void> get onPing => _pingController.stream;
 
   /// Initialize with optional auth token or auth service
-  /// 
+  ///
   /// For simple token-based auth:
   /// ```dart
   /// ConvexService.instance.initialize(authToken: 'your-token');
   /// ```
-  /// 
+  ///
   /// For AuthService integration (reactive updates):
   /// ```dart
   /// ConvexService.instance.initialize(authService);
@@ -145,7 +149,7 @@ class ConvexService extends ChangeNotifier {
   void _onAuthChanged() {
     _updateTokenFromAuthService();
     _updateHttpClient();
-    
+
     // Reconnect WebSocket with new auth token if connected
     if (_connectionState == ConvexConnectionState.connected) {
       _reconnectWebSocket();
@@ -173,7 +177,7 @@ class ConvexService extends ChangeNotifier {
     if (_authToken != newToken) {
       _authToken = newToken;
       _updateHttpClient();
-      
+
       // Reconnect WebSocket with new auth token if connected
       if (_connectionState == ConvexConnectionState.connected) {
         _reconnectWebSocket();
@@ -287,10 +291,12 @@ class ConvexService extends ChangeNotifier {
 
     try {
       // Use actual Convex WebSocket protocol endpoint
-      final wsUrl = ConvexConfig.deploymentUrl
-          .replaceFirst('https://', 'wss://')
-          .replaceFirst('http://', 'ws://') + '/api/1.27.0/sync';
-      
+      final wsUrl =
+          ConvexConfig.deploymentUrl
+              .replaceFirst('https://', 'wss://')
+              .replaceFirst('http://', 'ws://') +
+          '/api/1.27.0/sync';
+
       _wsChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
       _wsChannel!.stream.listen(
@@ -302,10 +308,9 @@ class ConvexService extends ChangeNotifier {
       // Generate proper UUID format session ID (Convex expects UUID format)
       _sessionId = _generateSessionId();
       _connectionCount++;
-      
+
       // Send initial Connect message
       _sendConnectMessage();
-      
     } catch (e) {
       debugPrint('WebSocket connection error: $e');
       _handleWebSocketError(e);
@@ -316,7 +321,7 @@ class ConvexService extends ChangeNotifier {
     try {
       final data = jsonDecode(message as String);
       final type = data['type'] as String?;
-      
+
       switch (type) {
         case 'Transition':
           _handleTransition(data);
@@ -346,28 +351,30 @@ class ConvexService extends ChangeNotifier {
 
   void _handleTransition(Map<String, dynamic> data) {
     final modifications = data['modifications'] as List<dynamic>? ?? [];
-    
+
     for (final mod in modifications) {
       final modMap = mod as Map<String, dynamic>;
       final modType = modMap['type'] as String?;
       final queryId = modMap['queryId'] as int?;
-      
+
       if (queryId == null) continue;
-      
+
       final subscriptionId = _queryIdToSubscriptionId[queryId];
-      if (subscriptionId == null || !_subscriptions.containsKey(subscriptionId)) {
+      if (subscriptionId == null ||
+          !_subscriptions.containsKey(subscriptionId)) {
         continue;
       }
-      
+
       final subscription = _subscriptions[subscriptionId]!;
-      
+
       switch (modType) {
         case 'QueryUpdated':
           final value = modMap['value'];
           subscription.controller.add(value);
           break;
         case 'QueryFailed':
-          final errorMessage = modMap['errorMessage'] as String? ?? 'Query failed';
+          final errorMessage =
+              modMap['errorMessage'] as String? ?? 'Query failed';
           debugPrint('Convex query failed: $errorMessage');
           subscription.controller.addError(Exception(errorMessage));
           break;
@@ -375,7 +382,7 @@ class ConvexService extends ChangeNotifier {
           break;
       }
     }
-    
+
     // Update version numbers
     final endVersion = data['endVersion'] as Map<String, dynamic>?;
     if (endVersion != null) {
@@ -383,29 +390,29 @@ class ConvexService extends ChangeNotifier {
       _identityVersion = endVersion['identity'] as int? ?? _identityVersion;
     }
   }
-  
+
   void _handleMutationResponse(Map<String, dynamic> data) {
     _mutationResponseController.add(data);
   }
-  
+
   void _handleActionResponse(Map<String, dynamic> data) {
     _actionResponseController.add(data);
   }
-  
+
   void _handleAuthError(Map<String, dynamic> data) {
     final error = data['error'] as String? ?? 'Authentication error';
     debugPrint('Convex auth error: $error');
     _setConnectionState(ConvexConnectionState.error);
     _authErrorController.add(error);
   }
-  
+
   void _handleFatalError(Map<String, dynamic> data) {
     final error = data['error'] as String? ?? 'Fatal error';
     debugPrint('Convex fatal error: $error');
     _setConnectionState(ConvexConnectionState.error);
     _fatalErrorController.add(error);
   }
-  
+
   void _handlePing(Map<String, dynamic> data) {
     _pingController.add(null);
   }
@@ -451,7 +458,7 @@ class ConvexService extends ChangeNotifier {
 
   void _sendConnectMessage() {
     if (_wsChannel == null || _sessionId == null) return;
-    
+
     final connectMessage = {
       'type': 'Connect',
       'sessionId': _sessionId!,
@@ -459,30 +466,30 @@ class ConvexService extends ChangeNotifier {
       'lastCloseReason': null,
       'clientTs': DateTime.now().millisecondsSinceEpoch,
     };
-    
+
     _wsChannel!.sink.add(jsonEncode(connectMessage));
-    
+
     // After connect, send auth if available
     Timer(const Duration(milliseconds: 100), () {
       _sendAuthMessage();
     });
   }
-  
+
   void _sendAuthMessage() {
     if (_wsChannel == null) return;
-    
+
     final authMessage = {
       'type': 'Authenticate',
       'tokenType': _authToken != null ? 'User' : 'None',
       'baseVersion': _identityVersion,
     };
-    
+
     if (_authToken != null) {
       authMessage['value'] = _authToken!;
     }
-    
+
     _wsChannel!.sink.add(jsonEncode(authMessage));
-    
+
     // Set connected state after auth
     Timer(const Duration(milliseconds: 200), () {
       if (_connectionState == ConvexConnectionState.connecting) {
@@ -496,10 +503,9 @@ class ConvexService extends ChangeNotifier {
   void _sendSubscriptionRequest(ConvexSubscription subscription) {
     if (_wsChannel != null &&
         _connectionState == ConvexConnectionState.connected) {
-      
       final queryId = _nextQueryId++;
       _queryIdToSubscriptionId[queryId] = subscription.subscriptionId;
-      
+
       // Send ModifyQuerySet message to add the query
       final addQuery = {
         'type': 'Add',
@@ -507,16 +513,16 @@ class ConvexService extends ChangeNotifier {
         'udfPath': subscription.functionName,
         'args': [subscription.args], // Convex expects args as an array
       };
-      
+
       final modifyMessage = {
         'type': 'ModifyQuerySet',
         'baseVersion': _querySetVersion,
         'newVersion': _querySetVersion + 1,
         'modifications': [addQuery],
       };
-      
+
       _querySetVersion++;
-      
+
       _wsChannel!.sink.add(jsonEncode(modifyMessage));
     }
   }
@@ -537,28 +543,24 @@ class ConvexService extends ChangeNotifier {
           queryIdToRemove = queryId;
         }
       });
-      
+
       // Send unsubscribe message
-      if (queryIdToRemove != null && 
+      if (queryIdToRemove != null &&
           _wsChannel != null &&
           _connectionState == ConvexConnectionState.connected) {
-        
-        final removeQuery = {
-          'type': 'Remove',
-          'queryId': queryIdToRemove!,
-        };
-        
+        final removeQuery = {'type': 'Remove', 'queryId': queryIdToRemove!};
+
         final modifyMessage = {
           'type': 'ModifyQuerySet',
           'baseVersion': _querySetVersion,
           'newVersion': _querySetVersion + 1,
           'modifications': [removeQuery],
         };
-        
+
         _querySetVersion++;
-        
+
         _wsChannel!.sink.add(jsonEncode(modifyMessage));
-        
+
         _queryIdToSubscriptionId.remove(queryIdToRemove!);
       }
 
@@ -605,7 +607,7 @@ class ConvexService extends ChangeNotifier {
       subscription.dispose();
     }
     _subscriptions.clear();
-    
+
     // Close all stream controllers
     _mutationResponseController.close();
     _actionResponseController.close();
