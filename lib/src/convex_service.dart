@@ -74,6 +74,7 @@ class ConvexService extends ChangeNotifier {
   // HTTP client for one-time operations
   ConvexClient? _httpClient;
   String? _authToken;
+  ChangeNotifier? _authService;
 
   // WebSocket connection for real-time subscriptions
   WebSocketChannel? _wsChannel;
@@ -119,10 +120,52 @@ class ConvexService extends ChangeNotifier {
   /// Stream of ping events from the server
   Stream<void> get onPing => _pingController.stream;
 
-  /// Initialize with optional auth token
-  void initialize({String? authToken}) {
-    _authToken = authToken;
+  /// Initialize with optional auth token or auth service
+  /// 
+  /// For simple token-based auth:
+  /// ```dart
+  /// ConvexService.instance.initialize(authToken: 'your-token');
+  /// ```
+  /// 
+  /// For AuthService integration (reactive updates):
+  /// ```dart
+  /// ConvexService.instance.initialize(authService);
+  /// ```
+  void initialize([ChangeNotifier? authService, String? authToken]) {
+    if (authService != null) {
+      _authService = authService;
+      _authService!.addListener(_onAuthChanged);
+      _updateTokenFromAuthService();
+    } else {
+      _authToken = authToken;
+    }
     _updateHttpClient();
+  }
+
+  void _onAuthChanged() {
+    _updateTokenFromAuthService();
+    _updateHttpClient();
+    
+    // Reconnect WebSocket with new auth token if connected
+    if (_connectionState == ConvexConnectionState.connected) {
+      _reconnectWebSocket();
+    }
+  }
+
+  void _updateTokenFromAuthService() {
+    if (_authService != null) {
+      // Try to get token from common AuthService patterns
+      try {
+        // Try accessing 'token' property via reflection-like approach
+        final dynamic service = _authService;
+        if (service.runtimeType.toString().contains('AuthService')) {
+          _authToken = service.token as String?;
+        }
+      } catch (e) {
+        // If reflection fails, token will remain null
+        debugPrint('Could not get token from auth service: $e');
+      }
+    }
   }
 
   /// Update auth token and reconnect if needed
@@ -553,6 +596,7 @@ class ConvexService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _authService?.removeListener(_onAuthChanged);
     _reconnectTimer?.cancel();
     _wsChannel?.sink.close();
 
