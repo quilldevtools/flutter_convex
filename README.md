@@ -31,8 +31,76 @@ void main() {
   // Initialize Convex configuration
   ConvexConfig.initialize('https://your-deployment.convex.cloud');
   
-  // Initialize the service
-  ConvexService.instance.initialize(authToken: 'your-auth-token');
+  // Initialize the service (see Authentication section for options)
+  ConvexService.instance.initialize();
+  
+  runApp(MyApp());
+}
+```
+
+## Authentication
+
+The package supports multiple authentication patterns:
+
+### 1. No Authentication (Public Access)
+
+```dart
+// For public/anonymous access to Convex functions
+ConvexConfig.initialize('https://your-deployment.convex.cloud');
+ConvexService.instance.initialize();
+
+// Use without authentication
+final data = await ConvexService.instance.query('public:getData', {});
+```
+
+### 2. Static Token Authentication
+
+```dart
+// For simple token-based authentication
+ConvexService.instance.initialize(null, 'your-jwt-token');
+
+// Use with token
+final data = await ConvexService.instance.query('protected:getData', {});
+```
+
+### 3. AuthService Integration (Reactive)
+
+```dart
+// For apps with AuthService (ChangeNotifier pattern)
+// Automatically syncs token changes and reconnects WebSocket
+ConvexService.instance.initialize(authService);
+
+// Token updates automatically when authService.token changes
+```
+
+### 4. Manual Token Management
+
+```dart
+// Start without authentication
+ConvexService.instance.initialize();
+
+// Add token later
+ConvexService.instance.updateAuthToken('new-token');
+
+// Remove token
+ConvexService.instance.updateAuthToken(null);
+```
+
+### 5. Complete Auth Example
+
+```dart
+void main() {
+  ConvexConfig.initialize('https://your-deployment.convex.cloud');
+  
+  // Option A: No auth
+  ConvexService.instance.initialize();
+  
+  // Option B: Static token  
+  ConvexService.instance.initialize(null, 'jwt-token');
+  
+  // Option C: AuthService integration
+  final authService = MyAuthService();
+  ConvexService.instance.initialize(authService);
   
   runApp(MyApp());
 }
@@ -116,7 +184,10 @@ The main service class that provides both HTTP and WebSocket functionality.
 
 #### Methods
 
-- `initialize({String? authToken})` - Initialize the service with optional auth token
+- `initialize([ChangeNotifier? authService, String? authToken])` - Initialize with AuthService or token
+  - No params: No authentication
+  - First param: AuthService integration (reactive)
+  - Second param: Static token authentication
 - `updateAuthToken(String? token)` - Update auth token and reconnect if needed
 - `query<T>(String functionName, Map<String, dynamic> args)` - Execute a query
 - `mutation<T>(String functionName, Map<String, dynamic> args)` - Execute a mutation
