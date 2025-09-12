@@ -21,7 +21,7 @@ void main() {
         
         // Switch to AuthService
         convexService.initialize(authService);
-        expect(authService.hasListeners, isTrue);
+        expect(authService.hasActiveListeners, isTrue);
         
         // Simulate login
         authService.mockLogin('test-token', {'id': 'user1', 'name': 'Test User'});
@@ -46,7 +46,7 @@ void main() {
         authService.mockLogin('token3', {'id': 'user3'});
         
         // Should handle all changes gracefully
-        expect(authService.hasListeners, isTrue);
+        expect(authService.hasActiveListeners, isTrue);
       });
     });
 
@@ -153,7 +153,7 @@ void main() {
         // Switch to AuthService
         service.initialize(authService);
         
-        expect(authService.hasListeners, isTrue);
+        expect(authService.hasActiveListeners, isTrue);
       });
 
       test('pattern: AuthService to no auth', () {
@@ -163,7 +163,7 @@ void main() {
         
         // Start with AuthService
         service.initialize(authService);
-        expect(authService.hasListeners, isTrue);
+        expect(authService.hasActiveListeners, isTrue);
         
         // Switch to no auth (service may keep listening)
         service.initialize();
@@ -203,6 +203,9 @@ class AuthServiceExample extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _token != null;
+  
+  /// Public method to check if there are listeners (avoids protected member access)
+  bool get hasActiveListeners => hasListeners;
   
   void mockLogin(String token, Map<String, dynamic> user) {
     _isLoading = true;

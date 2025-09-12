@@ -255,7 +255,7 @@ class ConvexService extends ChangeNotifier {
     final subscription = ConvexSubscription<T>(
       functionName: functionName,
       args: args,
-      controller: controller as StreamController<T?>,
+      controller: controller,
       subscriptionId: subscriptionId,
     );
 
@@ -292,10 +292,9 @@ class ConvexService extends ChangeNotifier {
     try {
       // Use actual Convex WebSocket protocol endpoint
       final wsUrl =
-          ConvexConfig.deploymentUrl
+          '${ConvexConfig.deploymentUrl
               .replaceFirst('https://', 'wss://')
-              .replaceFirst('http://', 'ws://') +
-          '/api/1.27.0/sync';
+              .replaceFirst('http://', 'ws://')}/api/1.27.0/sync';
 
       _wsChannel = WebSocketChannel.connect(Uri.parse(wsUrl));
 

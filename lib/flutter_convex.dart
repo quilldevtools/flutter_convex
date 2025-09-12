@@ -1,5 +1,5 @@
 /// Flutter package for Convex integration with real-time subscriptions and optimistic updates.
-library flutter_convex;
+library;
 
 export 'src/convex_client.dart';
 export 'src/convex_service.dart';

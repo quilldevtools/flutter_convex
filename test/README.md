@@ -2,30 +2,15 @@
 
 This directory contains comprehensive tests for the flutter_convex package, ensuring reliability and correctness across all major functionality.
 
-## Test Coverage
+## Test Files
 
-### Mocked Unit Tests (`mocked_functionality_test.dart`) - **RECOMMENDED**
-- **No Network Calls**: All tests run without making HTTP requests or WebSocket connections
-- **ConvexConfig**: Initialization, configuration management, reconfiguration
-- **ConvexService**: Singleton pattern, authentication modes, connection state, event streams
-- **ConvexClient**: Instantiation with various auth patterns
-- **Authentication Integration**: AuthService integration, token management
-- **Subscription Management**: Multiple subscriptions, cleanup, stream validation
-- **Error Handling**: Graceful error handling without network dependencies
-- **Performance**: Singleton consistency, safe reconfigurations
-- **Real-world Usage Patterns**: Common authentication patterns
+### Unit Tests (Individual class testing)
+- **`convex_config_test.dart`** - ConvexConfig unit tests 
+- **`convex_client_test.dart`** - ConvexClient unit tests 
+- **`convex_service_test.dart`** - ConvexService unit tests 
 
-### Integration Tests (`basic_functionality_test.dart` & `integration_test.dart`)
-- **Live Integration**: Tests that interact with actual service interfaces
-- **End-to-End Flows**: Complete authentication lifecycle scenarios
-- **Service Integration**: All services working together
-- **Stream Architecture**: Broadcast streams, multiple listeners
-
-## Test Results
-**24 mocked tests passing** - All functionality verified without network calls  
-**30 integration tests passing** - Real service interaction verified  
-**54 total tests** - Comprehensive coverage across all scenarios  
-**0 test failures** - Reliable implementation
+### Integration Tests (End-to-end workflows)
+- **`integration_test.dart`** - Complete integration scenarios 
 
 ## Key Features Tested
 
@@ -56,32 +41,39 @@ This directory contains comprehensive tests for the flutter_convex package, ensu
 ## Running Tests
 
 ```bash
-# Run mocked tests (recommended - no network calls)
-flutter test test/mocked_functionality_test.dart
+# Run all tests
+flutter test
 
-# Run integration tests (makes actual service calls)
-flutter test test/basic_functionality_test.dart test/integration_test.dart
+# Run with coverage
+flutter test --coverage
 
-# Run all tests with coverage
-flutter test test/mocked_functionality_test.dart test/basic_functionality_test.dart test/integration_test.dart --coverage
+# Run specific test file
+flutter test test/convex_config_test.dart
+flutter test test/convex_client_test.dart
+flutter test test/convex_service_test.dart
+flutter test test/integration_test.dart
 
-# For CI/CD: run only mocked tests (fast, reliable, no network dependencies)
-flutter test test/mocked_functionality_test.dart --coverage
+# Run only unit tests (fast, no network calls)
+flutter test test/convex_config_test.dart test/convex_client_test.dart test/convex_service_test.dart
+
+# Run only integration tests
+flutter test test/integration_test.dart
 ```
 
 ## Test Architecture
 
-### Mocked Tests (`mocked_functionality_test.dart`)
+### Unit Tests (Class-specific testing)
 - **No network dependencies**: Tests run without making HTTP/WebSocket calls
 - **Fast execution**: Perfect for CI/CD pipelines
-- **Reliable**: No external service dependencies
-- **Unit-focused**: Tests individual components in isolation
-- **MockAuthService**: Custom auth service implementation for testing
+- **Isolated testing**: Each class tested independently
+- **Comprehensive coverage**: All public methods and properties tested
+- **Mock implementations**: Custom test utilities to avoid external dependencies
 
-### Integration Tests (`basic_functionality_test.dart`, `integration_test.dart`)  
-- **Live service interaction**: Tests actual HTTP/WebSocket behavior
-- **End-to-end validation**: Verifies complete workflows
-- **Real-world scenarios**: Tests with actual service responses
+### Integration Tests (End-to-end testing)
+- **Complete workflows**: Full authentication lifecycle scenarios
+- **Service interaction**: How all services work together as a system
+- **Real-world patterns**: Common usage patterns developers will use
+- **Performance validation**: System behavior under various conditions
 
 ### Design Principles
 - Test public APIs only (no private member access)
