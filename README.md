@@ -2,6 +2,11 @@
 
 A Flutter package for Convex integration with real-time subscriptions and optimistic updates.
 
+
+https://github.com/user-attachments/assets/4f4f433b-6096-40d1-8863-db1dc7a0b2cb
+
+
+
 ## Features
 
 - ✅ **Real-time subscriptions** - Live data updates via WebSocket
