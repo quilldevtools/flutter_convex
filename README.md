@@ -2,7 +2,7 @@
 
 A Flutter package for Convex integration with real-time subscriptions and optimistic updates.
 
-![Avid-Convex demo](https://github.com/user-attachments/assets/03a9cf81-ad3c-417e-9288-20ce5e10566e)
+![Flutter-Convex demo](https://github.com/user-attachments/assets/03a9cf81-ad3c-417e-9288-20ce5e10566e)
 
 ## Features
 
